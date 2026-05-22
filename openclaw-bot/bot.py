@@ -5,7 +5,7 @@ import asyncio
 import re
 import subprocess
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import Thread
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -118,21 +118,21 @@ def read_memory():
 
 def append_memory(fact: str):
     current = read_memory()
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    timestamp = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M")
     new_entry = f"\n- [{timestamp}] {fact}"
     MEMORY_FILE.write_text(current + new_entry)
 
 def get_daily_log_path():
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d")
     return MEMORY_DIR / f"{today}.md"
 
 def append_daily_log(entry: str):
     log_path = get_daily_log_path()
-    timestamp = datetime.now().strftime("%H:%M")
+    timestamp = datetime.now(timezone(timedelta(hours=3))).strftime("%H:%M")
     if log_path.exists():
         content = log_path.read_text()
     else:
-        content = f"# Günlük Log - {datetime.now().strftime('%Y-%m-%d')}\n\n"
+        content = f"# Günlük Log - {datetime.now(timezone(timedelta(hours=3))).strftime('%Y-%m-%d')}\n\n"
     content += f"- [{timestamp}] {entry}\n"
     log_path.write_text(content)
 
@@ -170,7 +170,7 @@ def add_task(title: str, due: str = None, user_id: int = 0):
         "title": title,
         "due": due,
         "status": "pending",
-        "created": datetime.now().isoformat(),
+        "created": datetime.now(timezone(timedelta(hours=3))).isoformat(),
         "user_id": user_id
     }
     tasks.append(task)
@@ -182,7 +182,7 @@ def complete_task(task_id: int):
     for t in tasks:
         if t["id"] == task_id:
             t["status"] = "done"
-            t["completed"] = datetime.now().isoformat()
+            t["completed"] = datetime.now(timezone(timedelta(hours=3))).isoformat()
     save_tasks(tasks)
 
 def get_pending_tasks():
@@ -212,7 +212,7 @@ def add_cron_job(name: str, schedule: str, prompt: str, chat_id: int):
         "prompt": prompt,
         "chat_id": chat_id,
         "active": True,
-        "created": datetime.now().isoformat()
+        "created": datetime.now(timezone(timedelta(hours=3))).isoformat()
     }
     jobs.append(job)
     save_cron_jobs(jobs)
@@ -457,7 +457,7 @@ def build_system_prompt(user_id: int) -> str:
     memory = read_memory()
     heartbeat = HEARTBEAT_FILE.read_text() if HEARTBEAT_FILE.exists() else ""
     pending_tasks = get_pending_tasks()
-    today = datetime.now().strftime("%Y-%m-%d %H:%M")
+    today = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M")
     
     tasks_str = ""
     if pending_tasks:
@@ -600,7 +600,7 @@ async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"⏰ Zamanlanmış görevler: {len(jobs)}\n"
         f"📝 Günlük log sayısı: {log_count}\n"
         f"📁 Dosya sayısı: {file_count}\n"
-        f"🕐 Şu an: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        f"🕐 Şu an: {datetime.now(timezone(timedelta(hours=3))).strftime('%Y-%m-%d %H:%M')}",
         parse_mode="Markdown"
     )
 
@@ -799,7 +799,7 @@ async def heartbeat_check(app: Application):
     """Proactive heartbeat - checks tasks, reminders"""
     try:
         tasks = get_pending_tasks()
-        now = datetime.now()
+        now = datetime.now(timezone(timedelta(hours=3)))
         
         for task in tasks:
             if task.get("due"):
