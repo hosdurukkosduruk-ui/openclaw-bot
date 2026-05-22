@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ai-telegram-bot
+    runtime: docker
+    plan: free
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: SYSTEM_PROMPT
+        value: "Sen yardımcı bir AI asistansın. Türkçe konuşuyorsun. Her konuda yardımcı oluyorsun."
+      - key: PORT
+        value: 10000
