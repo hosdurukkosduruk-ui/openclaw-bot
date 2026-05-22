@@ -865,7 +865,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     # Initialize scheduler
-    scheduler = AsyncIOScheduler(timezone="Europe/Istanbul")
+    scheduler = BackgroundScheduler(timezone="Europe/Istanbul")
     
     # Load existing cron jobs
     for job in load_cron_jobs():
