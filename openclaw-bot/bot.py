@@ -12,11 +12,15 @@ logger = logging.getLogger(__name__)
 # Environment variables
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "Sen yardımcı bir AI asistansın. Türkçe konuşuyorsun. Her konuda yardımcı oluyorsun. Kullanıcıya kısa ve öz cevaplar ver.")
 
-# OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY)
+# OpenAI client (custom base URL destekli)
+client = OpenAI(
+    api_key=OPENAI_API_KEY,
+    base_url=OPENAI_BASE_URL
+)
 
 # Conversation memory (per user)
 conversations = {}
@@ -60,6 +64,7 @@ async def model_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Model bilgisini göster"""
     await update.message.reply_text(
         f"🧠 Kullanılan model: `{OPENAI_MODEL}`\n"
+        f"🌐 API: `{OPENAI_BASE_URL}`\n"
         f"💾 Hafıza: Son {MAX_HISTORY} mesaj hatırlanıyor\n"
         f"🟢 Durum: Aktif ve çalışıyor!",
         parse_mode="Markdown"
@@ -91,7 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     add_message(user_id, "user", user_message)
     
     try:
-        # OpenAI API çağrısı
+        # API çağrısı
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         messages.extend(get_conversation(user_id))
         
@@ -116,7 +121,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(ai_response)
             
     except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
+        logger.error(f"API error: {e}")
         await update.message.reply_text(
             f"❌ Hata oluştu: {str(e)[:200]}\n\nTekrar deneyin."
         )
@@ -133,6 +138,7 @@ def main():
         raise ValueError("OPENAI_API_KEY environment variable is not set!")
     
     logger.info(f"🚀 Bot başlatılıyor... Model: {OPENAI_MODEL}")
+    logger.info(f"🌐 API Base URL: {OPENAI_BASE_URL}")
     
     # Application oluştur
     app = Application.builder().token(TELEGRAM_TOKEN).build()
